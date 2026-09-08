@@ -548,7 +548,29 @@ STM32F407VGT6_Smart_Controller.ioc
 
 ### Hardware Setup
 
-> Hardware photo and wiring diagram will be added here.
+```mermaid
+flowchart LR
+
+    PC[PC / Serial Terminal]
+    LM75[LM75 Temperature Sensor]
+    OLED[SSD1306 OLED]
+    ADC[Analog Input]
+    PWM[PWM Load / Driver]
+    BTN[USER Button]
+    LED[External LED]
+    STLINK[ST-LINK]
+
+    MCU[STM32F407VGT6]
+
+    PC <-->|USART2| MCU
+    LM75 <-->|I2C1| MCU
+    MCU -->|SPI2| OLED
+    ADC -->|ADC1 CH11| MCU
+    MCU -->|TIM2 CH2 PWM| PWM
+    BTN -->|PA0 / EXTI0| MCU
+    MCU -->|PC14 GPIO| LED
+    STLINK <-->|SWD| MCU
+```
 
 ---
 
