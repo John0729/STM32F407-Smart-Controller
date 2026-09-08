@@ -560,7 +560,7 @@ flowchart LR
     LED[External LED]
     STLINK[ST-LINK]
 
-    MCU[STM32F407VGT6]
+    MCU["STM32F407VGT6<br/>Main Controller"]
 
     PC <-->|USART2| MCU
     LM75 <-->|I2C1| MCU
@@ -570,8 +570,13 @@ flowchart LR
     BTN -->|PA0 / EXTI0| MCU
     MCU -->|PC14 GPIO| LED
     STLINK <-->|SWD| MCU
-```
 
+    classDef peripheral font-size:13px,stroke-width:1px;
+    classDef controller font-size:22px,font-weight:bold,stroke-width:3px;
+
+    class PC,LM75,OLED,ADC,PWM,BTN,LED,STLINK peripheral;
+    class MCU controller;
+```
 ---
 
 ## Skills Demonstrated
