@@ -69,6 +69,7 @@ flowchart TD
 
     APP --> PWM
     APP --> OLED
+    APP --> LED
 ```
 
 ---
@@ -86,26 +87,33 @@ flowchart TD
 ### State Flow
 
 ```mermaid
-stateDiagram-v2
-    [*] --> INIT
+flowchart TB
 
-    INIT --> IDLE: Initialization OK
-    INIT --> FAULT: Critical fault
+    START((Start))
+    INIT[INIT]
+    IDLE[IDLE]
+    MANUAL[MANUAL]
+    AUTO[AUTO]
+    FAULT[FAULT]
 
-    IDLE --> MANUAL
-    IDLE --> AUTO
+    START --> INIT
+    INIT -->|Initialization OK| IDLE
+    INIT -->|Critical fault| FAULT
 
-    MANUAL --> IDLE: STOP
-    AUTO --> IDLE: STOP
+    IDLE -->|START / MANUAL| MANUAL
+    IDLE -->|AUTO| AUTO
 
-    MANUAL --> AUTO
-    AUTO --> MANUAL
+    MANUAL -->|AUTO| AUTO
+    AUTO -->|MANUAL| MANUAL
 
-    IDLE --> FAULT: Critical fault
-    MANUAL --> FAULT: Critical fault
-    AUTO --> FAULT: Critical fault
+    MANUAL -->|STOP| IDLE
+    AUTO -->|STOP| IDLE
 
-    FAULT --> IDLE: CLEAR + Recovery OK
+    IDLE -->|Critical fault| FAULT
+    MANUAL -->|Critical fault| FAULT
+    AUTO -->|Critical fault| FAULT
+
+    FAULT -->|CLEAR + Recovery OK| IDLE
 ```
 
 ---
@@ -124,7 +132,7 @@ temperature measurement.
 For temperatures between 25 °C and 40 °C:
 
 ```text
-PWM (%) = (Temperature - 25) × 100 / 15
+PWM (%) = (Temperature - 25) × 100 / (40 - 25)
 ```
 
 This creates a simple linear temperature-control profile.
@@ -207,19 +215,21 @@ A DMA buffer stores:
 32 samples
 ```
 
-After the DMA transfer completes, the firmware calculates the average:
+After 32 ADC samples are transferred by DMA, the DMA completion callback signals the main loop to calculate the average.
 
 ```mermaid
 flowchart LR
 
     ADC[ADC1]
     DMA[DMA Buffer<br/>32 Samples]
-    AVG[Average]
-    VALUE[ADC Result]
+    EVENT[DMA Complete]
+    AVG[Average<br/>32 Samples]
+    RESULT[ADC Result]
 
     ADC --> DMA
-    DMA --> AVG
-    AVG --> VALUE
+    DMA --> EVENT
+    EVENT --> AVG
+    AVG --> RESULT
 ```
 
 Raw ADC range:
@@ -238,26 +248,39 @@ Voltage (mV) = ADC × 3300 / 4095
 
 ## UART DMA Reception
 
-UART reception uses DMA together with UART IDLE detection.
+UART reception uses DMA together with UART IDLE detection. Received data is
+accumulated in a line buffer until a CR (`\r`) or LF (`\n`) terminator is detected.
 
 ```mermaid
 flowchart LR
 
     RX[UART RX]
     DMA[DMA Buffer]
-    IDLE[UART IDLE Event]
-    FLAG[Command Ready]
+    EVENT[RX Event Callback]
+    PROCESS[Process Received Bytes]
+    LINE[Command Line Buffer]
+    CHECK{CR / LF?}
     PARSER[ASCII Parser]
     APP[Application]
+    NEXT{All Bytes Processed?}
 
     RX --> DMA
-    DMA --> IDLE
-    IDLE --> FLAG
-    FLAG --> PARSER
+    DMA --> EVENT
+    EVENT --> PROCESS
+    PROCESS --> LINE
+    LINE --> CHECK
+
+    CHECK -->|No| NEXT
+    CHECK -->|Yes| PARSER
     PARSER --> APP
+    APP --> NEXT
+
+    NEXT -->|No| PROCESS
+    NEXT -->|Yes / Re-arm DMA| RX
 ```
 
-This avoids continuously polling the UART peripheral.
+This avoids continuously polling the UART peripheral while supporting
+variable-length ASCII commands.
 
 ---
 
@@ -405,29 +428,28 @@ Core/
 
 ## Firmware Architecture
 
-The project currently uses a **super-loop architecture without an RTOS**.
-
 ```mermaid
-flowchart TD
+flowchart TB
 
     LOOP[Main Loop]
-
     ADC[Process ADC]
-    SENSOR[Read Temperature]
-    FAULT1[Check Fault]
+    SENSOR[Process Temperature Sensor]
+    FAULT1[Check Critical Fault]
     CONTROL[Process Control]
     DISPLAY[Update OLED]
-    UART[Process UART]
-    BUTTON[Process Button]
+    FAULT2[Check Critical Fault]
+    BUTTON[Process Button Event]
+    UART[Process UART Event]
 
     LOOP --> ADC
     ADC --> SENSOR
     SENSOR --> FAULT1
     FAULT1 --> CONTROL
     CONTROL --> DISPLAY
-    DISPLAY --> UART
-    UART --> BUTTON
-    BUTTON --> LOOP
+    DISPLAY --> FAULT2
+    FAULT2 --> BUTTON
+    BUTTON --> UART
+    UART --> LOOP
 ```
 
 DMA and interrupts handle asynchronous peripheral events, while application
@@ -494,7 +516,7 @@ This allows control calculations without requiring floating-point arithmetic.
 Clone the repository:
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/STM32F407-Smart-Controller.git
+git clone https://github.com/John0729/STM32F407-Smart-Controller.git
 ```
 
 Import into STM32CubeIDE:
@@ -548,33 +570,35 @@ STM32F407VGT6_Smart_Controller.ioc
 
 ### Hardware Setup
 
+![Circuit](Hardware_setup.jpg)
+
 ```mermaid
 flowchart LR
 
-    PC[PC / Serial Terminal]
-    LM75[LM75 Temperature Sensor]
-    OLED[SSD1306 OLED]
-    ADC[Analog Input]
-    PWM[PWM Load / Driver]
-    BTN[USER Button]
-    LED[External LED]
-    STLINK[ST-LINK]
+    PC["PC<br/>Serial Terminal"]
+    LM75["LM75<br/>Temp Sensor"]
+    ADC["Analog<br/>Input"]
+    BTN["USER<br/>Button"]
 
-    MCU["STM32F407VGT6<br/>Main Controller"]
+    OLED["SSD1306<br/>OLED"]
+    PWM["PWM Load<br/>/ Driver"]
+    LED["External<br/>LED"]
+
+    MCU["<br/>STM32F407VGT6<br/><br/>"]
 
     PC <-->|USART2| MCU
     LM75 <-->|I2C1| MCU
-    MCU -->|SPI2| OLED
     ADC -->|ADC1 CH11| MCU
-    MCU -->|TIM2 CH2 PWM| PWM
     BTN -->|PA0 / EXTI0| MCU
+
+    MCU -->|TIM2 CH2 PWM| PWM
+    MCU -->|SPI2| OLED
     MCU -->|PC14 GPIO| LED
-    STLINK <-->|SWD| MCU
 
     classDef peripheral font-size:13px,stroke-width:1px;
-    classDef controller font-size:22px,font-weight:bold,stroke-width:3px;
+    classDef controller font-size:20px,font-weight:bold,stroke-width:3px,text-align:center;
 
-    class PC,LM75,OLED,ADC,PWM,BTN,LED,STLINK peripheral;
+    class PC,LM75,ADC,BTN,OLED,PWM,LED peripheral;
     class MCU controller;
 ```
 ---
@@ -589,24 +613,3 @@ This project demonstrates practical experience with:
 
 ---
 
-## Development Environment
-
-| | |
-|---|---|
-| MCU | STM32F407VGT6 |
-| IDE | STM32CubeIDE |
-| Language | C |
-| Framework | STM32 HAL |
-| Architecture | Super-loop |
-| RTOS | None |
-| Version Control | Git / GitHub |
-
----
-
-<div align="center">
-
-### STM32F407 Smart Controller
-
-**Embedded firmware portfolio project**
-
-</div>
