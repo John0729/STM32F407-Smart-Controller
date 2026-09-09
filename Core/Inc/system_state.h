@@ -21,9 +21,7 @@ typedef enum
 
 void SystemState_Init(void);
 
-uint8_t SystemState_Set(
-    SystemState_t new_state
-);
+uint8_t SystemState_Set(SystemState_t new_state);
 
 SystemState_t SystemState_Get(void);
 

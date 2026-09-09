@@ -23,13 +23,9 @@
 
 void FaultManager_Init(void);
 
-void FaultManager_Set(
-    uint16_t fault
-);
+void FaultManager_Set(uint16_t fault);
 
-void FaultManager_Clear(
-    uint16_t fault
-);
+void FaultManager_Clear(uint16_t fault);
 
 void FaultManager_ClearAll(void);
 

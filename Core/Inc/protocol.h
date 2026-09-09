@@ -107,9 +107,6 @@ typedef struct
  * LED OFF
  * LED TOGGLE
  */
-ProtocolStatus_t Protocol_ParseAscii(
-    char *input,
-    ProtocolCommand_t *output
-);
+ProtocolStatus_t Protocol_ParseAscii(char *input, ProtocolCommand_t *output);
 
 #endif

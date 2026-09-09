@@ -45,8 +45,7 @@ static void Protocol_Normalize(
      */
     start = text;
 
-    while ((*start != '\0') &&
-           isspace((unsigned char)*start))
+    while ((*start != '\0') && isspace((unsigned char)*start))
     {
         start++;
     }
@@ -71,11 +70,7 @@ static void Protocol_Normalize(
      */
     length = strlen(text);
 
-    while ((length > 0U) &&
-           isspace(
-               (unsigned char)
-               text[length - 1U]
-           ))
+    while ((length > 0U) && isspace((unsigned char)text[length - 1U]))
     {
         text[length - 1U] = '\0';
 
@@ -88,10 +83,7 @@ static void Protocol_Normalize(
      */
     for (i = 0U; i < length; i++)
     {
-        text[i] =
-            (char)toupper(
-                (unsigned char)text[i]
-            );
+        text[i] = (char)toupper((unsigned char)text[i]);
     }
 }
 
@@ -121,10 +113,7 @@ static ProtocolStatus_t Protocol_ParsePwm(
 
 
     /* Parse commands such as "PWM 50" */
-    if ((*parameter != '\0') &&
-        !isspace(
-            (unsigned char)*parameter
-        ))
+    if ((*parameter != '\0') && !isspace((unsigned char)*parameter))
     {
         return PROTOCOL_INVALID_COMMAND;
     }
@@ -133,10 +122,7 @@ static ProtocolStatus_t Protocol_ParsePwm(
     /*
      * Skip spaces.
      */
-    while ((*parameter != '\0') &&
-           isspace(
-               (unsigned char)*parameter
-           ))
+    while ((*parameter != '\0') && isspace((unsigned char)*parameter))
     {
         parameter++;
     }
@@ -180,10 +166,7 @@ static ProtocolStatus_t Protocol_ParsePwm(
     /*
      * Ignore trailing spaces.
      */
-    while ((*end_ptr != '\0') &&
-           isspace(
-               (unsigned char)*end_ptr
-           ))
+    while ((*end_ptr != '\0') && isspace((unsigned char)*end_ptr))
     {
         end_ptr++;
     }
@@ -211,31 +194,24 @@ static ProtocolStatus_t Protocol_ParsePwm(
     }
 
 
-    output->command =
-        PROTOCOL_CMD_SET_PWM;
+    output->command = PROTOCOL_CMD_SET_PWM;
 
-    output->data =
-        (uint16_t)value;
+    output->data = (uint16_t)value;
 
 
     return PROTOCOL_OK;
 }
 
 
-ProtocolStatus_t Protocol_ParseAscii(
-    char *input,
-    ProtocolCommand_t *output
-)
+ProtocolStatus_t Protocol_ParseAscii(char *input, ProtocolCommand_t *output)
 {
-    if ((input == NULL) ||
-        (output == NULL))
+    if ((input == NULL) || (output == NULL))
     {
         return PROTOCOL_INVALID_PARAMETER;
     }
 
 
-    output->command =
-        PROTOCOL_CMD_NONE;
+    output->command = PROTOCOL_CMD_NONE;
 
     output->data = 0U;
 
@@ -258,13 +234,9 @@ ProtocolStatus_t Protocol_ParseAscii(
     /*
      * PING
      */
-    if (strcmp(
-            input,
-            "PING"
-        ) == 0)
+    if (strcmp(input, "PING") == 0)
     {
-        output->command =
-            PROTOCOL_CMD_PING;
+        output->command = PROTOCOL_CMD_PING;
 
         return PROTOCOL_OK;
     }
@@ -273,13 +245,9 @@ ProtocolStatus_t Protocol_ParseAscii(
     /*
      * START
      */
-    if (strcmp(
-            input,
-            "START"
-        ) == 0)
+    if (strcmp(input, "START") == 0)
     {
-        output->command =
-            PROTOCOL_CMD_START;
+        output->command = PROTOCOL_CMD_START;
 
         return PROTOCOL_OK;
     }
@@ -288,13 +256,9 @@ ProtocolStatus_t Protocol_ParseAscii(
     /*
      * STOP
      */
-    if (strcmp(
-            input,
-            "STOP"
-        ) == 0)
+    if (strcmp(input, "STOP") == 0)
     {
-        output->command =
-            PROTOCOL_CMD_STOP;
+        output->command = PROTOCOL_CMD_STOP;
 
         return PROTOCOL_OK;
     }
@@ -303,13 +267,9 @@ ProtocolStatus_t Protocol_ParseAscii(
     /*
      * MANUAL
      */
-    if (strcmp(
-            input,
-            "MANUAL"
-        ) == 0)
+    if (strcmp(input, "MANUAL") == 0)
     {
-        output->command =
-            PROTOCOL_CMD_MANUAL_MODE;
+        output->command = PROTOCOL_CMD_MANUAL_MODE;
 
         return PROTOCOL_OK;
     }
@@ -318,13 +278,9 @@ ProtocolStatus_t Protocol_ParseAscii(
     /*
      * AUTO
      */
-    if (strcmp(
-            input,
-            "AUTO"
-        ) == 0)
+    if (strcmp(input, "AUTO") == 0)
     {
-        output->command =
-            PROTOCOL_CMD_AUTO_MODE;
+        output->command = PROTOCOL_CMD_AUTO_MODE;
 
         return PROTOCOL_OK;
     }
@@ -333,13 +289,9 @@ ProtocolStatus_t Protocol_ParseAscii(
     /*
      * STATUS
      */
-    if (strcmp(
-            input,
-            "STATUS"
-        ) == 0)
+    if (strcmp(input, "STATUS") == 0)
     {
-        output->command =
-            PROTOCOL_CMD_GET_STATUS;
+        output->command = PROTOCOL_CMD_GET_STATUS;
 
         return PROTOCOL_OK;
     }
@@ -348,13 +300,9 @@ ProtocolStatus_t Protocol_ParseAscii(
     /*
      * TEMP
      */
-    if (strcmp(
-            input,
-            "TEMP"
-        ) == 0)
+    if (strcmp(input, "TEMP") == 0)
     {
-        output->command =
-            PROTOCOL_CMD_READ_SENSOR;
+        output->command = PROTOCOL_CMD_READ_SENSOR;
 
         return PROTOCOL_OK;
     }
@@ -363,13 +311,9 @@ ProtocolStatus_t Protocol_ParseAscii(
     /*
      * ADC
      */
-    if (strcmp(
-            input,
-            "ADC"
-        ) == 0)
+    if (strcmp(input, "ADC") == 0)
     {
-        output->command =
-            PROTOCOL_CMD_READ_ADC;
+        output->command = PROTOCOL_CMD_READ_ADC;
 
         return PROTOCOL_OK;
     }
@@ -378,13 +322,9 @@ ProtocolStatus_t Protocol_ParseAscii(
     /*
      * CLEAR
      */
-    if (strcmp(
-            input,
-            "CLEAR"
-        ) == 0)
+    if (strcmp(input, "CLEAR") == 0)
     {
-        output->command =
-            PROTOCOL_CMD_CLEAR_FAULT;
+        output->command = PROTOCOL_CMD_CLEAR_FAULT;
 
         return PROTOCOL_OK;
     }
@@ -393,13 +333,9 @@ ProtocolStatus_t Protocol_ParseAscii(
     /*
      * LED ON
      */
-    if (strcmp(
-            input,
-            "LED ON"
-        ) == 0)
+    if (strcmp(input, "LED ON") == 0)
     {
-        output->command =
-            PROTOCOL_CMD_LED_ON;
+        output->command = PROTOCOL_CMD_LED_ON;
 
         return PROTOCOL_OK;
     }
@@ -408,13 +344,9 @@ ProtocolStatus_t Protocol_ParseAscii(
     /*
      * LED OFF
      */
-    if (strcmp(
-            input,
-            "LED OFF"
-        ) == 0)
+    if (strcmp(input, "LED OFF") == 0)
     {
-        output->command =
-            PROTOCOL_CMD_LED_OFF;
+        output->command = PROTOCOL_CMD_LED_OFF;
 
         return PROTOCOL_OK;
     }
@@ -423,13 +355,9 @@ ProtocolStatus_t Protocol_ParseAscii(
     /*
      * LED TOGGLE
      */
-    if (strcmp(
-            input,
-            "LED TOGGLE"
-        ) == 0)
+    if (strcmp(input,  "LED TOGGLE") == 0)
     {
-        output->command =
-            PROTOCOL_CMD_LED_TOGGLE;
+        output->command = PROTOCOL_CMD_LED_TOGGLE;
 
         return PROTOCOL_OK;
     }
@@ -438,16 +366,9 @@ ProtocolStatus_t Protocol_ParseAscii(
     /*
      * PWM xxx
      */
-    if (strncmp(
-            input,
-            "PWM",
-            3U
-        ) == 0)
+    if (strncmp(input, "PWM", 3U) == 0)
     {
-        return Protocol_ParsePwm(
-            input,
-            output
-        );
+        return Protocol_ParsePwm(input,output);
     }
 
 

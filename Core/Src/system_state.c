@@ -1,14 +1,12 @@
 #include "system_state.h"
 
 
-static SystemState_t current_state =
-    SYSTEM_STATE_INIT;
+static SystemState_t current_state = SYSTEM_STATE_INIT;
 
 
 void SystemState_Init(void)
 {
-    current_state =
-        SYSTEM_STATE_INIT;
+    current_state = SYSTEM_STATE_INIT;
 }
 
 
@@ -18,9 +16,7 @@ SystemState_t SystemState_Get(void)
 }
 
 
-uint8_t SystemState_Set(
-    SystemState_t new_state
-)
+uint8_t SystemState_Set(SystemState_t new_state)
 {
     /*
      * Staying in the same state
@@ -40,8 +36,7 @@ uint8_t SystemState_Set(
          */
         case SYSTEM_STATE_INIT:
 
-            if ((new_state == SYSTEM_STATE_IDLE) ||
-                (new_state == SYSTEM_STATE_FAULT))
+            if ((new_state == SYSTEM_STATE_IDLE) || (new_state == SYSTEM_STATE_FAULT))
             {
                 current_state = new_state;
 

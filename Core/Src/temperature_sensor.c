@@ -47,9 +47,7 @@ TempSensorStatus_t TempSensor_Init(void)
  *
  * raw = 0x1980
  */
-TempSensorStatus_t TempSensor_ReadRaw(
-    int16_t *raw
-)
+TempSensorStatus_t TempSensor_ReadRaw(int16_t *raw)
 {
     uint8_t data[2];
 
@@ -71,10 +69,7 @@ TempSensorStatus_t TempSensor_ReadRaw(
         return TEMP_SENSOR_ERROR;
     }
 
-    *raw = (int16_t)(
-        ((uint16_t)data[0] << 8)
-        |
-        (uint16_t)data[1]
+    *raw = (int16_t)(((uint16_t)data[0] << 8) | (uint16_t)data[1]
     );
 
     return TEMP_SENSOR_OK;
@@ -116,9 +111,7 @@ TempSensorStatus_t TempSensor_ReadCelsiusX10(
         return TEMP_SENSOR_ERROR;
     }
 
-    if (TempSensor_ReadRaw(
-            &raw_register
-        ) != TEMP_SENSOR_OK)
+    if (TempSensor_ReadRaw(&raw_register) != TEMP_SENSOR_OK)
     {
         return TEMP_SENSOR_ERROR;
     }
@@ -127,8 +120,7 @@ TempSensorStatus_t TempSensor_ReadCelsiusX10(
      * LM75 temperature data occupies
      * bits [15:7].
      */
-    raw_9bit =
-        ((uint16_t)raw_register >> 7);
+    raw_9bit = ((uint16_t)raw_register >> 7);
 
     /*
      * Sign extend the 9-bit
@@ -141,8 +133,7 @@ TempSensorStatus_t TempSensor_ReadCelsiusX10(
         raw_9bit |= 0xFE00U;
     }
 
-    temperature_half_degree =
-        (int16_t)raw_9bit;
+    temperature_half_degree = (int16_t)raw_9bit;
 
     /*
      * Each count = 0.5 C.
@@ -151,8 +142,7 @@ TempSensorStatus_t TempSensor_ReadCelsiusX10(
      *
      * 0.5 * 10 = 5
      */
-    *temperature_x10 =
-        temperature_half_degree * 5;
+    *temperature_x10 = temperature_half_degree * 5;
 
     return TEMP_SENSOR_OK;
 }

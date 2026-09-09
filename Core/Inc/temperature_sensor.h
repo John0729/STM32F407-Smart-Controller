@@ -22,9 +22,7 @@ TempSensorStatus_t TempSensor_Init(void);
 /*
  * Read the raw 16-bit temperature register.
  */
-TempSensorStatus_t TempSensor_ReadRaw(
-    int16_t *raw
-);
+TempSensorStatus_t TempSensor_ReadRaw(int16_t *raw);
 
 
 /*
@@ -35,9 +33,7 @@ TempSensorStatus_t TempSensor_ReadRaw(
  * 30.0 C -> 300
  * -5.0 C -> -50
  */
-TempSensorStatus_t TempSensor_ReadCelsiusX10(
-    int16_t *temperature_x10
-);
+TempSensorStatus_t TempSensor_ReadCelsiusX10(int16_t *temperature_x10);
 
 
 #endif /* INC_TEMPERATURE_SENSOR_H_ */

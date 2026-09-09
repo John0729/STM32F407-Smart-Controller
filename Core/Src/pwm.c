@@ -26,9 +26,7 @@ void PWM_SetDuty(uint8_t duty)
         duty = 100;
     }
 
-    compare =
-        ((htim2.Init.Period + 1U) * duty)
-        / 100U;
+    compare =((htim2.Init.Period + 1U) * duty) / 100U;
 
     __HAL_TIM_SET_COMPARE(
         &htim2,

@@ -80,23 +80,17 @@ volatile uint16_t uart_rx_length = 0;
 
 
 /* Data received by UART DMA */
-uint8_t uart_rx_buffer[
-    UART_RX_BUFFER_SIZE + 1U
-];
+uint8_t uart_rx_buffer[UART_RX_BUFFER_SIZE + 1U];
 
 
 /* Stores one complete UART command */
-char uart_line_buffer[
-    UART_RX_BUFFER_SIZE + 1U
-];
+char uart_line_buffer[UART_RX_BUFFER_SIZE + 1U];
 
 static uint16_t uart_line_length = 0U;
 
 
 /* UART response */
-char uart_tx_buffer[
-    UART_TX_BUFFER_SIZE
-];
+char uart_tx_buffer[UART_TX_BUFFER_SIZE];
 
 
 /* Result after ASCII parsing. */
@@ -135,15 +129,11 @@ static void MX_SPI2_Init(void);
 static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
-static void App_SendText(
-    const char *text
-);
+static void App_SendText(const char *text);
 
 static void App_StartUartReceive(void);
 
-static const char *App_StateToString(
-    SystemState_t state
-);
+static const char *App_StateToString(SystemState_t state);
 
 static void App_SendStatus(void);
 
@@ -250,8 +240,7 @@ static void App_ProcessSensor(void)
 {
     int16_t temperature;
 
-    if ((HAL_GetTick() - sensor_tick)
-        < SENSOR_UPDATE_PERIOD_MS)
+    if ((HAL_GetTick() - sensor_tick) < SENSOR_UPDATE_PERIOD_MS)
     {
         return;
     }
@@ -259,32 +248,25 @@ static void App_ProcessSensor(void)
     sensor_tick = HAL_GetTick();
 
 
-    if (TempSensor_ReadCelsiusX10(
-            &temperature
-        ) == TEMP_SENSOR_OK)
+    if (TempSensor_ReadCelsiusX10(&temperature) == TEMP_SENSOR_OK)
     {
-        latest_temperature_x10 =
-            temperature;
+        latest_temperature_x10 = temperature;
 
         /* Sensor is working normally */
         temp_sensor_fail_count = 0U;
     }
     else
     {
-        if (temp_sensor_fail_count <
-            TEMP_SENSOR_FAIL_LIMIT)
+        if (temp_sensor_fail_count < TEMP_SENSOR_FAIL_LIMIT)
         {
             temp_sensor_fail_count++;
         }
 
 
         /* Enter FAULT after 3 consecutive failures */
-        if (temp_sensor_fail_count >=
-            TEMP_SENSOR_FAIL_LIMIT)
+        if (temp_sensor_fail_count >= TEMP_SENSOR_FAIL_LIMIT)
         {
-            FaultManager_Set(
-                FAULT_TEMP_SENSOR
-            );
+            FaultManager_Set(FAULT_TEMP_SENSOR);
         }
     }
 }
@@ -299,12 +281,9 @@ static void App_CheckCriticalFault(void)
 {
     if (FaultManager_HasCritical())
     {
-        if (SystemState_Get() !=
-            SYSTEM_STATE_FAULT)
+        if (SystemState_Get() != SYSTEM_STATE_FAULT)
         {
-            SystemState_Set(
-                SYSTEM_STATE_FAULT
-            );
+            SystemState_Set(SYSTEM_STATE_FAULT);
         }
 
 
@@ -325,8 +304,7 @@ static void App_ProcessControl(void)
     int32_t temperature;
 
 
-    state =
-        SystemState_Get();
+    state = SystemState_Get();
 
 
     switch (state)
@@ -365,17 +343,14 @@ static void App_ProcessControl(void)
          */
         case SYSTEM_STATE_AUTO:
 
-            temperature =
-                latest_temperature_x10;
+            temperature = latest_temperature_x10;
 
 
-            if (temperature <=
-                AUTO_TEMP_MIN_X10)
+            if (temperature <= AUTO_TEMP_MIN_X10)
             {
                 duty = 0U;
             }
-            else if (temperature >=
-                     AUTO_TEMP_MAX_X10)
+            else if (temperature >= AUTO_TEMP_MAX_X10)
             {
                 duty = 100U;
             }
@@ -387,20 +362,7 @@ static void App_ProcessControl(void)
                  * 25 C -> 0%
                  * 40 C -> 100%
                  */
-                duty =
-                    (uint8_t)(
-                        (
-                            (temperature -
-                             AUTO_TEMP_MIN_X10)
-                            *
-                            100L
-                        )
-                        /
-                        (
-                            AUTO_TEMP_MAX_X10 -
-                            AUTO_TEMP_MIN_X10
-                        )
-                    );
+                duty = (uint8_t)(((temperature - AUTO_TEMP_MIN_X10)*100L) /(AUTO_TEMP_MAX_X10 - AUTO_TEMP_MIN_X10));
             }
 
 
@@ -433,27 +395,20 @@ static void App_AttemptFaultRecovery(void)
     /*
      * Check temperature sensor.
      */
-    if (TempSensor_Init() !=
-        TEMP_SENSOR_OK)
+    if (TempSensor_Init() !=TEMP_SENSOR_OK)
     {
-        FaultManager_Set(
-            FAULT_TEMP_SENSOR
-        );
+        FaultManager_Set(FAULT_TEMP_SENSOR);
     }
 
     if (FaultManager_HasCritical())
     {
-        SystemState_Set(
-            SYSTEM_STATE_FAULT
-        );
+        SystemState_Set(SYSTEM_STATE_FAULT);
 
         PWM_SetDuty(0);
     }
     else
     {
-        SystemState_Set(
-            SYSTEM_STATE_IDLE
-        );
+        SystemState_Set(SYSTEM_STATE_IDLE);
 
         PWM_SetDuty(0);
     }
@@ -530,43 +485,27 @@ static void App_ProcessUartCommand(void)
 {
     ProtocolStatus_t status;
 
-    uart_line_buffer[
-        uart_line_length
-    ] = '\0';
+    uart_line_buffer[uart_line_length] = '\0';
 
 
-    status =
-        Protocol_ParseAscii(
-            uart_line_buffer,
-            &received_command
-        );
+    status = Protocol_ParseAscii(uart_line_buffer, &received_command);
 
 
     if (status == PROTOCOL_OK)
     {
         App_HandleCommand();
     }
-    else if (status ==
-             PROTOCOL_INVALID_COMMAND)
+    else if (status == PROTOCOL_INVALID_COMMAND)
     {
-        FaultManager_Set(
-            FAULT_INVALID_COMMAND
-        );
+        FaultManager_Set(FAULT_INVALID_COMMAND);
 
-        App_SendText(
-            "ERR UNKNOWN COMMAND\r\n"
-        );
+        App_SendText("ERR UNKNOWN COMMAND\r\n");
     }
-    else if (status ==
-             PROTOCOL_INVALID_PARAMETER)
+    else if (status == PROTOCOL_INVALID_PARAMETER)
     {
-        FaultManager_Set(
-            FAULT_INVALID_PARAMETER
-        );
+        FaultManager_Set(FAULT_INVALID_PARAMETER);
 
-        App_SendText(
-            "ERR INVALID PARAMETER\r\n"
-        );
+        App_SendText( "ERR INVALID PARAMETER\r\n");
     }
 
 
@@ -586,9 +525,7 @@ static void App_HandleCommand(void)
     {
         case PROTOCOL_CMD_PING:
         {
-            App_SendText(
-                "PONG\r\n"
-            );
+            App_SendText("PONG\r\n");
 
             break;
         }
@@ -597,19 +534,13 @@ static void App_HandleCommand(void)
         {
             if (FaultManager_HasCritical())
             {
-                App_SendText(
-                    "ERR CRITICAL FAULT\r\n"
-                );
+                App_SendText( "ERR CRITICAL FAULT\r\n");
             }
             else
             {
-                SystemState_Set(
-                    SYSTEM_STATE_MANUAL
-                );
+                SystemState_Set(SYSTEM_STATE_MANUAL);
 
-                App_SendText(
-                    "OK MODE=MANUAL\r\n"
-                );
+                App_SendText("OK MODE=MANUAL\r\n");
             }
 
             break;
@@ -620,12 +551,9 @@ static void App_HandleCommand(void)
             PWM_SetDuty(0);
 
 
-            if (SystemState_Get() !=
-                SYSTEM_STATE_FAULT)
+            if (SystemState_Get() != SYSTEM_STATE_FAULT)
             {
-                SystemState_Set(
-                    SYSTEM_STATE_IDLE
-                );
+                SystemState_Set(SYSTEM_STATE_IDLE);
             }
 
 
@@ -641,9 +569,7 @@ static void App_HandleCommand(void)
             );
 
 
-            App_SendText(
-                uart_tx_buffer
-            );
+            App_SendText( uart_tx_buffer);
 
             break;
         }
@@ -653,37 +579,26 @@ static void App_HandleCommand(void)
             uint16_t requested_duty;
 
 
-            requested_duty =
-                received_command.data;
+            requested_duty = received_command.data;
 
-            if (SystemState_Get() !=
-                SYSTEM_STATE_MANUAL)
+            if (SystemState_Get() != SYSTEM_STATE_MANUAL)
             {
-                App_SendText(
-                    "ERR MODE NOT MANUAL\r\n"
-                );
+                App_SendText("ERR MODE NOT MANUAL\r\n");
 
                 break;
             }
 
             if (requested_duty > 100U)
             {
-                FaultManager_Set(
-                    FAULT_INVALID_PARAMETER
-                );
+                FaultManager_Set(FAULT_INVALID_PARAMETER);
 
-                App_SendText(
-                    "ERR PWM RANGE 0-100\r\n"
-                );
+                App_SendText("ERR PWM RANGE 0-100\r\n");
 
                 break;
             }
 
 
-            PWM_SetDuty(
-                (uint8_t)
-                    requested_duty
-            );
+            PWM_SetDuty((uint8_t)requested_duty);
 
 
             snprintf(
@@ -697,9 +612,7 @@ static void App_HandleCommand(void)
             );
 
 
-            App_SendText(
-                uart_tx_buffer
-            );
+            App_SendText(uart_tx_buffer);
 
             break;
         }
@@ -715,19 +628,13 @@ static void App_HandleCommand(void)
         {
             if (FaultManager_HasCritical())
             {
-                App_SendText(
-                    "ERR CRITICAL FAULT\r\n"
-                );
+                App_SendText("ERR CRITICAL FAULT\r\n");
             }
             else
             {
-                SystemState_Set(
-                    SYSTEM_STATE_AUTO
-                );
+                SystemState_Set(SYSTEM_STATE_AUTO);
 
-                App_SendText(
-                    "OK MODE=AUTO\r\n"
-                );
+                App_SendText("OK MODE=AUTO\r\n");
             }
 
             break;
@@ -737,19 +644,13 @@ static void App_HandleCommand(void)
         {
             if (FaultManager_HasCritical())
             {
-                App_SendText(
-                    "ERR CRITICAL FAULT\r\n"
-                );
+                App_SendText("ERR CRITICAL FAULT\r\n");
             }
             else
             {
-                SystemState_Set(
-                    SYSTEM_STATE_MANUAL
-                );
+                SystemState_Set(SYSTEM_STATE_MANUAL);
 
-                App_SendText(
-                    "OK MODE=MANUAL\r\n"
-                );
+                App_SendText("OK MODE=MANUAL\r\n");
             }
 
             break;
@@ -762,25 +663,20 @@ static void App_HandleCommand(void)
             int32_t positive_temperature;
 
 
-            if ((FaultManager_Get() &
-                 FAULT_TEMP_SENSOR) != 0U)
+            if ((FaultManager_Get() & FAULT_TEMP_SENSOR) != 0U)
             {
-                App_SendText(
-                    "ERR TEMP SENSOR\r\n"
-                );
+                App_SendText("ERR TEMP SENSOR\r\n");
 
                 break;
             }
 
 
-            temperature =
-                latest_temperature_x10;
+            temperature = latest_temperature_x10;
 
 
             if (temperature < 0)
             {
-                positive_temperature =
-                    -temperature;
+                positive_temperature = -temperature;
 
 
                 snprintf(
@@ -813,9 +709,7 @@ static void App_HandleCommand(void)
             }
 
 
-            App_SendText(
-                uart_tx_buffer
-            );
+            App_SendText(uart_tx_buffer);
 
             break;
         }
@@ -855,9 +749,7 @@ static void App_HandleCommand(void)
             }
 
 
-            App_SendText(
-                uart_tx_buffer
-            );
+            App_SendText(uart_tx_buffer);
 
             break;
         }
@@ -870,9 +762,7 @@ static void App_HandleCommand(void)
                 GPIO_PIN_SET
             );
 
-            App_SendText(
-                "OK LED=ON\r\n"
-            );
+            App_SendText("OK LED=ON\r\n");
 
             break;
         }
@@ -919,9 +809,7 @@ static void App_HandleCommand(void)
             );
 
 
-            App_SendText(
-                uart_tx_buffer
-            );
+            App_SendText(uart_tx_buffer);
 
             break;
         }
@@ -929,9 +817,7 @@ static void App_HandleCommand(void)
 
         default:
         {
-            App_SendText(
-                "ERR UNKNOWN COMMAND\r\n"
-            );
+            App_SendText("ERR UNKNOWN COMMAND\r\n");
 
             break;
         }
@@ -943,8 +829,7 @@ static void App_ProcessDisplay(void)
     char text[22];
     SystemState_t state;
 
-    if ((HAL_GetTick() - display_tick)
-        < DISPLAY_UPDATE_PERIOD_MS)
+    if ((HAL_GetTick() - display_tick) < DISPLAY_UPDATE_PERIOD_MS)
     {
         return;
     }
@@ -1108,22 +993,16 @@ int main(void)
 
   if (debug_temp_init == TEMP_SENSOR_OK)
   {
-      debug_temp_read =
-          TempSensor_ReadCelsiusX10(
-              &latest_temperature_x10
-          );
+      debug_temp_read = TempSensor_ReadCelsiusX10(&latest_temperature_x10);
   }
   else
   {
       debug_temp_read = TEMP_SENSOR_ERROR;
   }
 
-  if ((debug_temp_init != TEMP_SENSOR_OK) ||
-      (debug_temp_read != TEMP_SENSOR_OK))
+  if ((debug_temp_init != TEMP_SENSOR_OK) || (debug_temp_read != TEMP_SENSOR_OK))
   {
-      FaultManager_Set(
-          FAULT_TEMP_SENSOR
-      );
+      FaultManager_Set(FAULT_TEMP_SENSOR);
   }
 
   /*
@@ -1131,15 +1010,11 @@ int main(void)
    */
   if (FaultManager_HasCritical())
   {
-      SystemState_Set(
-          SYSTEM_STATE_FAULT
-      );
+      SystemState_Set(SYSTEM_STATE_FAULT);
   }
   else
   {
-      SystemState_Set(
-          SYSTEM_STATE_IDLE
-      );
+      SystemState_Set(SYSTEM_STATE_IDLE);
   }
 
 
@@ -1189,15 +1064,12 @@ int main(void)
 
 	      uart_command_ready = 0;
 
-	      received_length =
-	          uart_rx_length;
+	      received_length = uart_rx_length;
 
 
-	      if (received_length >
-	          UART_RX_BUFFER_SIZE)
+	      if (received_length > UART_RX_BUFFER_SIZE)
 	      {
-	          received_length =
-	              UART_RX_BUFFER_SIZE;
+	          received_length = UART_RX_BUFFER_SIZE;
 	      }
 
 
@@ -1205,20 +1077,16 @@ int main(void)
 	       * Add received bytes to the
 	       * command buffer.
 	       */
-	      for (i = 0U;
-	           i < received_length;
-	           i++)
+	      for (i = 0U; i < received_length; i++)
 	      {
-	          char ch =
-	              (char)uart_rx_buffer[i];
+	          char ch = (char)uart_rx_buffer[i];
 
 
 	          /*
 	           * Enter means one command
 	           * is complete.
 	           */
-	          if ((ch == '\r') ||
-	              (ch == '\n'))
+	          if ((ch == '\r') || (ch == '\n'))
 	          {
 	              if (uart_line_length > 0U)
 	              {
@@ -1231,12 +1099,9 @@ int main(void)
 	               * Add character to
 	               * current command.
 	               */
-	              if (uart_line_length <
-	                  UART_RX_BUFFER_SIZE)
+	              if (uart_line_length < UART_RX_BUFFER_SIZE)
 	              {
-	                  uart_line_buffer[
-	                      uart_line_length
-	                  ] = ch;
+	                  uart_line_buffer[uart_line_length] = ch;
 
 	                  uart_line_length++;
 	              }
@@ -1247,9 +1112,7 @@ int main(void)
 	                   */
 	                  uart_line_length = 0U;
 
-	                  App_SendText(
-	                      "ERR COMMAND TOO LONG\r\n"
-	                  );
+	                  App_SendText("ERR COMMAND TOO LONG\r\n");
 	              }
 	          }
 	      }
@@ -1600,18 +1463,13 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_PIN)
 	}
 }
 
-void HAL_UARTEx_RxEventCallback(
-    UART_HandleTypeDef *huart,
-    uint16_t Size
-)
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 {
     if (huart->Instance == USART2)
     {
-        uart_rx_length =
-            Size;
+        uart_rx_length = Size;
 
-        uart_command_ready =
-            1;
+        uart_command_ready = 1;
     }
 }
 

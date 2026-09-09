@@ -205,9 +205,7 @@ void OLED_Init(void)
 
 void OLED_Clear(void)
 {
-    memset(oled_buffer,
-           0x00,
-           sizeof(oled_buffer));
+    memset(oled_buffer, 0x00, sizeof(oled_buffer));
 }
 
 
@@ -234,8 +232,7 @@ void OLED_Update(void)
     OLED_WriteCommand(0);
     OLED_WriteCommand(7);
 
-    OLED_WriteData(oled_buffer,
-                   sizeof(oled_buffer));
+    OLED_WriteData(oled_buffer, sizeof(oled_buffer));
 }
 
 
@@ -372,9 +369,7 @@ static const uint8_t font_uppercase[26][5] =
  * =========================================================
  */
 
-void OLED_DrawChar(uint8_t x,
-                   uint8_t page,
-                   char c)
+void OLED_DrawChar(uint8_t x, uint8_t page, char c)
 {
     const uint8_t *font = NULL;
 
@@ -472,15 +467,11 @@ void OLED_DrawChar(uint8_t x,
 
     for (uint8_t i = 0; i < 5; i++)
     {
-        oled_buffer[page * OLED_WIDTH
-                    + x
-                    + i] = font[i];
+        oled_buffer[page * OLED_WIDTH + x + i] = font[i];
     }
 
     /* 字元間留一個 pixel */
-    oled_buffer[page * OLED_WIDTH
-                + x
-                + 5] = 0x00;
+    oled_buffer[page * OLED_WIDTH + x + 5] = 0x00;
 }
 
 
@@ -489,9 +480,7 @@ void OLED_DrawChar(uint8_t x,
  * =========================================================
  */
 
-void OLED_DrawString(uint8_t x,
-                     uint8_t page,
-                     const char *str)
+void OLED_DrawString(uint8_t x, uint8_t page, const char *str)
 {
     while (*str != '\0')
     {
@@ -510,9 +499,7 @@ void OLED_DrawString(uint8_t x,
             }
         }
 
-        OLED_DrawChar(x,
-                      page,
-                      *str);
+        OLED_DrawChar(x, page, *str);
 
         /*
          * 5 pixel 字體
