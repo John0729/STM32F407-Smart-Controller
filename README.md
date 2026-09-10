@@ -564,13 +564,10 @@ STM32F407VGT6_Smart_Controller.ioc
 13. CLEAR
 ```
 
-### Demo Video
-
-> Demo video will be added here.
-
 ### Hardware Setup
 
 ![Circuit](Hardware_setup.jpg)
+![Circuit](Hardware_setup2.jpg)
 
 ```mermaid
 flowchart LR
